@@ -10,6 +10,7 @@ import terminalio
 import keypad
 import asyncio
 from adafruit_display_text import label
+from adafruit_bitmap_font import bitmap_font
 
 BUZZER = digitalio.DigitalInOut(board.GP6)
 BUZZER.direction = digitalio.Direction.OUTPUT
@@ -54,41 +55,48 @@ async def displayHandler(i2c, state):
     displayio.release_displays()
     display_bus = displayio.I2CDisplay(i2c, device_address=60)
     display = adafruit_displayio_ssd1306.SSD1306(display_bus, width=128, height=64)
+    font = bitmap_font.load_font("/Helvetica-Bold-16.bdf")
 
     # Make the display context
     top_panel = displayio.Group()
     display.show(top_panel)
 
-    color_bitmap = displayio.Bitmap(128, 32, 1)
-    color_palette = displayio.Palette(1)
-    color_palette[0] = 0xFFFFFF  # White
-
-    bg_sprite = displayio.TileGrid(color_bitmap, pixel_shader=color_palette, x=0, y=0)
-    top_panel.append(bg_sprite)
-
-    # Draw a smaller inner rectangle
-    inner_bitmap = displayio.Bitmap(118, 24, 1)
-    inner_palette = displayio.Palette(1)
-    inner_palette[0] = 0x000000  # Black
-    inner_sprite = displayio.TileGrid(inner_bitmap, pixel_shader=inner_palette, x=5, y=4)
-    top_panel.append(inner_sprite)
-
     # Draw a label
-    text = ""
-    text_area = label.Label(terminalio.FONT, text=text, color=0xFFFF00, x=28, y=15)
-    top_panel.append(text_area)
+    text = [''] * 4
+    text_area = []
+    
+    text_area.append(label.Label(font, text=text[0], color=0xFFFFFF, x=0, y=8))
+    text_area.append(label.Label(font, text=text[1], color=0xFFFFFF, x=0, y=40))
+    text_area.append(label.Label(font, text=text[2], color=0xFFFFFF, x=64, y=8))
+    text_area.append(label.Label(font, text=text[3], color=0xFFFFFF, x=64, y=40))
+    
+    top_panel.append(text_area[0])
+    top_panel.append(text_area[1])
+    top_panel.append(text_area[2])
+    top_panel.append(text_area[3])
 
-    while True:            
-        old = text_area
+    while True:
+        text = [''] * 4
+        
+        old = [ta for ta in text_area]
+
         if state.state == 1:
-            text = "%s\t%s" % (state.sensor.light, state.targetExposure)
+            text[0]= "%s" % (state.sensor.light)
+            text[1] = "%s" % (state.targetExposure)
         if state.state == 2:
-            text = "%s\t%s\t%s" % (state.cumulativeExposure[0],
-                                                state.cumulativeExposure[1], state.cumulativeExposure[2])
-            
-        text_area = label.Label(terminalio.FONT, text=text, color=0xFFFF00, x=8, y=15)
-        top_panel.append(text_area)
-        top_panel.remove(old)
+            text[0] = "%s" % (state.cumulativeExposure[0])
+            text[1] = "%s" % (state.cumulativeExposure[1])
+            text[2] = "%s" % (state.cumulativeExposure[2])
+        
+        # Old default font terminalio.FONT
+        text_area[0] = label.Label(font, text=text[0], color=0xFFFFFF, x=0, y=8)
+        text_area[1] = label.Label(font, text=text[1], color=0xFFFFFF, x=0, y=40)
+        text_area[2] = label.Label(font, text=text[2], color=0xFFFFFF, x=64, y=8)
+        text_area[3] = label.Label(font, text=text[3], color=0xFFFFFF, x=64, y=40)
+        
+        for i in range(4):
+            top_panel.append(text_area[i])
+            top_panel.remove(old[i])
 
         await asyncio.sleep(0.1)
 
