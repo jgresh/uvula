@@ -81,7 +81,7 @@ async def displayHandler(i2c, state):
         old = [ta for ta in text_area]
 
         if state.state == 1:
-            text[0]= "%s" % (state.sensor.light)
+            text[0]= "%s" % (state.sensor.uvs)
             text[1] = "%s" % (state.targetExposure)
         if state.state == 2:
             text[0] = "%s" % (state.cumulativeExposure[0])
@@ -152,8 +152,12 @@ async def runExposure(state):
 
     # count until a key is pressed
     while len(state.buffer) == 0:
-        estimate = (state.targetExposure - state.cumulativeExposure[0]) / (state.sensor.light * step)
-        state.cumulativeExposure = (state.cumulativeExposure[0] + state.sensor.light,
+        light = state.sensor.uvs
+        if light > 0:
+            estimate = (state.targetExposure - state.cumulativeExposure[0]) / (light * step)
+        else:
+            estimate = 'Inf'
+        state.cumulativeExposure = (state.cumulativeExposure[0] + light,
                                     state.cumulativeExposure[1] + step,
                                     estimate)
 
