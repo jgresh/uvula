@@ -1,1 +1,12 @@
 .DS_Store
+
+# CircuitPython libraries — copy from Adafruit bundle locally, don't commit
+lib/
+
+# Local device config — contains WiFi credentials and personal settings
+settings.toml
+
+# CircuitPython runtime output files
+boot_out.txt
+session_log.csv
+session_config.json
